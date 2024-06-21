@@ -38,7 +38,7 @@ func (gc *gosumeConfig) hasProfile(profile string) bool {
 	return gc.configFile.HasSection("profile " + profile)
 }
 
-func (gc *gosumeConfig) mfaDevice(profile string) string {
+func (gc *gosumeConfig) mfaSerial(profile string) string {
 	if !gc.hasProfile(profile) {
 		return ""
 	}
@@ -72,17 +72,15 @@ func (gc *gosumeConfig) credentials(profile string) *types.Credentials {
 	}
 	section := gc.credentialFile.Section(profile)
 
-	accessKeyId := section.Key("aws_access_key_id")
-	secretAccessKey := section.Key("aws_secret_access_key")
-	if accessKeyId == nil || secretAccessKey == nil {
+	accessKeyId := section.Key("aws_access_key_id").String()
+	secretAccessKey := section.Key("aws_secret_access_key").String()
+	if accessKeyId == "" || secretAccessKey == "" {
 		return nil
 	}
-	accessKeyIdString := accessKeyId.String()
-	secretAccessKeyString := secretAccessKey.String()
 
 	return &types.Credentials{
-		AccessKeyId:     &accessKeyIdString,
-		SecretAccessKey: &secretAccessKeyString,
+		AccessKeyId:     &accessKeyId,
+		SecretAccessKey: &secretAccessKey,
 	}
 }
 

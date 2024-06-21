@@ -83,7 +83,7 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 	stsClient := sts.NewFromConfig(conf)
 
 	sessionTokenInput := sts.GetSessionTokenInput{}
-	if mfaDevice := g.config.mfaDevice(profileName); mfaDevice != "" {
+	if mfaDevice := g.config.mfaSerial(profileName); mfaDevice != "" {
 		token, err := readTokenCode()
 		if err != nil {
 			return nil, fmt.Errorf("could not to read totp: \n\t%w", err)
