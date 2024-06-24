@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  BIN_NAME:
+    sh: basename $(pwd)
+  GOOS:
+    sh: go env GOOS
+  GOARCH:
+    sh: go env GOARCH
+  GOHOST: "GOOS={{.GOOS}} GOARCH={{.GOARCH}} go"
+  CGO: "CGO_ENABLED=0"
+  LDFLAGS: |
+    -s -w
+
+tasks:
+  build:
+    desc: Build the binary for the current OS/ARCH and move it to $PWD/bin
+    deps: [clean, test]
+    cmds:
+      - "{{.CGO}} {{.GOHOST}} build -a -ldflags '{{.LDFLAGS}}' -o {{.BIN_NAME}}_{{.GOOS}}_{{.GOARCH}} cmd/gosume/main.go"
+      - mkdir -p bin
+      - mv {{.BIN_NAME}}_{{.GOOS}}_{{.GOARCH}} bin/
+
+  clean:
+    desc: Clean temp files and folders
+    cmds:
+      - rm -rf ./dist/
+      - rm -rf ./bin/
+
+  default:
+    desc: "Default task"
+    cmds:
+      - task --list-all
+
+  # https://github.com/direnv/direnv
+  envrc:
+    desc: Generate .envrc file from .envrc.sample
+    cmds:
+      - cp .envrc.sample .envrc
+      - direnv allow
+
+  mod:
+    desc: Downloads and tidy Go modules
+    cmds:
+      - go mod download
+      - go mod tidy
+
+  test:
+    desc: Run all available tests (verbose)
+    cmds:
+      - go test -v ./...
+
+  update:
+    desc: Update all Go modules
+    cmds:
+      - go get -u ./...
+      - go mod tidy
