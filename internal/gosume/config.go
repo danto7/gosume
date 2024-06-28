@@ -11,12 +11,12 @@ type gosumeConfig struct {
 	credentialFile *ini.File
 }
 
-type profileConfig struct {
-	name          string
-	sourceProfile string
-	roleArn       string
-	mfaSerial     string
-}
+// type profileConfig struct {
+// 	name          string
+// 	sourceProfile string
+// 	roleArn       string
+// 	mfaSerial     string
+// }
 
 func newGosumeConfig() (*gosumeConfig, error) {
 	conf, err := ini.Load(config.DefaultSharedConfigFilename())
