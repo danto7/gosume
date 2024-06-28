@@ -140,12 +140,13 @@ func TestCredentialsHappyCase(t *testing.T) {
 	creds := config.credentials("A")
 	if creds == nil {
 		t.Errorf("should not be nil")
-	}
-	if *(creds.AccessKeyId) != "wurst" {
-		t.Errorf("access_key_id does not match")
-	}
-	if *(creds.SecretAccessKey) != "käse" {
-		t.Errorf("secret_access_key does not match")
+	} else {
+		if creds.AccessKeyId != nil && *(creds.AccessKeyId) != "wurst" {
+			t.Errorf("access_key_id does not match")
+		}
+		if creds.SecretAccessKey != nil && *(creds.SecretAccessKey) != "käse" {
+			t.Errorf("secret_access_key does not match")
+		}
 	}
 }
 
