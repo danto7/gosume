@@ -2,7 +2,6 @@ package gosume
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -43,7 +42,6 @@ func createTestCacheFile(tmpPath string, validJSON bool) error {
 func TestNewCredentialsCacheExists(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", tmpDir)
-	fmt.Println(tmpDir)
 
 	xdg.Reload()
 
@@ -70,7 +68,6 @@ func TestNewCredentialsCacheExists(t *testing.T) {
 func TestNewCredentialsCacheNotExists(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", tmpDir)
-	fmt.Println(tmpDir)
 
 	xdg.Reload()
 
@@ -93,7 +90,6 @@ func TestNewCredentialsCacheNotExists(t *testing.T) {
 func TestNewCredentialsCacheNotReadable(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", tmpDir)
-	fmt.Println(tmpDir)
 
 	xdg.Reload()
 
@@ -122,7 +118,6 @@ func TestNewCredentialsCacheNotReadable(t *testing.T) {
 func TestNewCredentialsCacheNotJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", tmpDir)
-	fmt.Println(tmpDir)
 
 	xdg.Reload()
 

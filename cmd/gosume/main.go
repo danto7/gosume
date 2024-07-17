@@ -10,7 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/charmbracelet/log"
-	"github.com/danto7/gosume/internal/gosume"
+	"github.com/danto7/gosume"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,15 +24,25 @@ func main() {
 	}
 	// TODO: gosume "profile-name" --session-name "session-name"
 	app := &cli.App{
-		Name:   "gosume",
-		Usage:  "Make Awsume even greater",
-		Action: assume,
+		Name:                 "gosume",
+		Usage:                "make awsume even greater",
+		Action:               assume,
+		DefaultCommand:       "assume",
+		EnableBashCompletion: true,
 		Commands: []*cli.Command{
 			{
 				Name:        "exec",
 				Aliases:     []string{"e"},
 				Description: "execute a command with the give profile",
 				Action:      execute,
+				ArgsUsage:   " <profile name> <command>",
+			},
+			{
+				Name:        "assume",
+				Aliases:     []string{"a"},
+				Description: "assume the given profile",
+				Action:      assume,
+				ArgsUsage:   " <profile name>",
 			},
 		},
 	}

@@ -32,6 +32,7 @@ func NewCredentialsCache() (*CredentialsCache, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not determine cache location: %w", err)
 	}
+	log.Debug("found cache file", "filename", cachePath)
 
 	cache := &CredentialsCache{
 		cachePath: cachePath,
