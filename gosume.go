@@ -3,7 +3,6 @@ package gosume
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/charmbracelet/log"
@@ -61,7 +60,7 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 		}
 		log.Infof("[Assumed profile %s]", profileName)
 
-		credentials, err := gosumeClient.AssumeArn(ctx, roleArn)
+		credentials, err := gosumeClient.AssumeRole(ctx, roleArn)
 		g.cache.setCredentials(profileName, "eu-central-1", credentials)
 		if err != nil {
 			return nil, fmt.Errorf("could not create config from session credentials: \n%w", err)
