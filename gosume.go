@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/charmbracelet/log"
 )
 
@@ -40,8 +39,7 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 	}
 
 	// TODO: this needs heavy refactoring after tests
-	var cfg *aws.Config
-	var latestProfileCredentialExpiration *time.Time
+	var gosumeClient *Client
 	for i, profileName := range *profileChain {
 		log.Debugf("assuming profile %s", profileName)
 		if i == 0 {
@@ -49,45 +47,31 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 			if err != nil {
 				return nil, fmt.Errorf("could not get source credentials: \n\t%w", err)
 			}
-			cfg = c
+			client := NewClientFromConfig(c)
+			gosumeClient = &client
 			continue
 		}
-		if cfg == nil {
+		if gosumeClient == nil {
 			panic("cfg should never be nil")
 		}
-
-		stsClient := sts.NewFromConfig(*cfg)
 
 		roleArn := g.config.roleArn(profileName)
 		if roleArn == "" && i != 0 {
 			return nil, fmt.Errorf("Profile %s has no role_arn. Can not continue", profileName)
 		}
-		session, err := stsClient.AssumeRole(ctx, &sts.AssumeRoleInput{
-			RoleArn:         &roleArn,
-			RoleSessionName: &profileName,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("could not assume roleArn %s: \n\t%w", roleArn, err)
-		}
 		log.Infof("[Assumed profile %s]", profileName)
 
-		g.cache.setCredentials(profileName, "eu-central-1", session.Credentials)
-		cfg, err = createConfigFromStaticCredentials(ctx, session.Credentials)
+		credentials, err := gosumeClient.AssumeArn(ctx, roleArn)
+		g.cache.setCredentials(profileName, "eu-central-1", credentials)
 		if err != nil {
 			return nil, fmt.Errorf("could not create config from session credentials: \n%w", err)
 		}
-
-		if session.Credentials.Expiration != nil {
-			// TODO: this is broken. this does not consider the source profile
-			latestProfileCredentialExpiration = session.Credentials.Expiration
-		}
-
 	}
-	log.Debug("assume profile chain successfull", "latestProfileCredentialExpiration", latestProfileCredentialExpiration)
 
 	err := g.cache.writeCredentialsCacheToDisk()
 	if err != nil {
 		return nil, fmt.Errorf("could not write credentials cache to disk: \n\t%w", err)
 	}
-	return cfg, nil
+	config := gosumeClient.Config()
+	return &config, nil
 }
