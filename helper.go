@@ -82,7 +82,7 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 
 func readTokenCode() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter TOTP: ")
+	fmt.Fprint(os.Stderr, "Enter TOTP: ")
 	text, err := reader.ReadString('\n')
 
 	return strings.TrimSpace(text), err
