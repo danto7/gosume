@@ -22,15 +22,15 @@ func init() {
 }
 
 type shellCompletionParameters struct {
-	BinaryPath string
+	BinaryPath                string
+	UpdateEnvironmentExitCode int
 }
 
 func Completion(cliCtx *cli.Context) error {
-	//ctx := cliCtx.Context
-
 	shell := cliCtx.Args().First()
 	params := shellCompletionParameters{
-		BinaryPath: os.Args[0],
+		BinaryPath:                os.Args[0],
+		UpdateEnvironmentExitCode: ShellWrapperUpdateEnvironment.ExitCode(),
 	}
 	var err error
 	if shell == "fish" {

@@ -58,7 +58,7 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 		if roleArn == "" && i != 0 {
 			return nil, fmt.Errorf("Profile %s has no role_arn. Can not continue", profileName)
 		}
-		log.Infof("[Assumed profile %s]", profileName)
+		log.Debugf("assumed profile %s", profileName)
 
 		credentials, err := gosumeClient.AssumeRole(ctx, roleArn)
 		g.cache.setCredentials(profileName, "eu-central-1", credentials)

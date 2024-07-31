@@ -9,6 +9,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var ShellWrapperUpdateEnvironment = cli.Exit("", 42)
+
 func Assume(cliCtx *cli.Context) error {
 	profileName := cliCtx.Args().First()
 	if profileName == "" {
@@ -26,17 +28,25 @@ func Assume(cliCtx *cli.Context) error {
 		return fmt.Errorf("could not assume profile: %w", err)
 	}
 
-	if cliCtx.Bool("print-secrets") {
-		credentials, err := config.Credentials.Retrieve(ctx)
-		if err != nil {
-			return fmt.Errorf("could not get credentials: \n%w", err)
-		}
-		fmt.Printf("AWS_ACCESS_KEY_ID=%s\n", credentials.AccessKeyID)
-		fmt.Printf("AWS_SECRET_ACCESS_KEY=%s\n", credentials.SecretAccessKey)
-		fmt.Printf("AWS_SESSION_TOKEN=%s\n", credentials.SessionToken)
-		fmt.Printf("AWS_REGION=%s\n", "eu-central-1")
+	if !cliCtx.Bool("print-secrets") {
+		log.Infof("Assumed profile %s", profileName)
+	}
 
-		return nil
+	if cliCtx.Bool("shell-wrapper") {
+		if cliCtx.Bool("print-secrets") {
+			credentials, err := config.Credentials.Retrieve(ctx)
+			if err != nil {
+				return fmt.Errorf("could not get credentials: \n%w", err)
+			}
+			fmt.Printf("AWS_ACCESS_KEY_ID=%s\n", credentials.AccessKeyID)
+			fmt.Printf("AWS_SECRET_ACCESS_KEY=%s\n", credentials.SecretAccessKey)
+			fmt.Printf("AWS_SESSION_TOKEN=%s\n", credentials.SessionToken)
+			fmt.Printf("AWS_REGION=%s\n", "eu-central-1")
+
+			return nil
+		} else {
+			return ShellWrapperUpdateEnvironment
+		}
 	}
 
 	stsClient := sts.NewFromConfig(*config)
@@ -45,7 +55,8 @@ func Assume(cliCtx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not get caller identity: %w", err)
 	}
-	log.Debug("Identity", "userid", *identity.UserId, "account", *identity.Account, "arn", *identity.Arn)
+	log.Info("Identity", "userid", *identity.UserId, "account", *identity.Account, "arn", *identity.Arn)
+	log.Warn("Your shell is not correctly configured for this command. See `gosume completion help` for more information")
 
 	return nil
 }

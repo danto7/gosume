@@ -10,19 +10,26 @@ import (
 )
 
 func main() {
-	if os.Args[0] != "gosume" {
-		log.SetLevel(log.DebugLevel)
-		log.Debugf("detected development environment. Switch to debug log level")
-	}
 	if log.GetLevel() == log.DebugLevel {
 		log.SetReportCaller(true)
+	} else {
+		log.SetReportTimestamp(false)
 	}
-	// TODO: gosume "profile-name" --session-name "session-name"
 	app := &cli.App{
-		Name:                 "gosume",
-		Usage:                "make awsume even greater",
-		DefaultCommand:       "assume",
-		EnableBashCompletion: true,
+		Name:  "gosume",
+		Usage: "make awsume even greater",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:   "shell-wrapper",
+				Usage:  "is used by the shell wrapper to indicate that we are called by it",
+				Hidden: true,
+			},
+			&cli.BoolFlag{
+				Name:   "print-secrets",
+				Usage:  "is used by the shell wrapper to load new environment variables",
+				Hidden: true,
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:        "completion",
@@ -43,18 +50,12 @@ func main() {
 				Description: "assume the given profile",
 				Action:      subcmds.Assume,
 				ArgsUsage:   " <profile name>",
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:   "print-secrets",
-						Value:  false,
-						Hidden: true,
-					},
-				},
 			},
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	err := app.Run(os.Args)
+	if err != nil {
 		log.Fatal(err)
 	}
 }
