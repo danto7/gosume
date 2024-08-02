@@ -29,6 +29,8 @@ func main() {
 				Usage:  "is used by the shell wrapper to load new environment variables",
 				Hidden: true,
 			},
+			// TODO(danto7) I think a way to integrate with the aws cli credential_process
+			// would be nice to have.
 		},
 		Commands: []*cli.Command{
 			{
