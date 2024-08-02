@@ -13,7 +13,7 @@ import (
 
 const GOSUME_CACHE_FILENAME = "gosume-cache.json"
 
-// TODO: check if *string is the right type for the fields
+// TODO: check if *string is the right type for the fields or if we use string
 type CachedProfile struct {
 	AccessKeyId     *string    `json:"access_key_id"`
 	SecretAccessKey *string    `json:"secret_access_key"`
