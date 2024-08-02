@@ -1,4 +1,6 @@
 name: "Run TODO to Issue"
+permissions:
+  contents: read
 on:
   push:
     branches:
