@@ -46,6 +46,13 @@ tasks:
       - go mod download
       - go mod tidy
 
+  release:
+    desc: Release a new version of gosume (e.g. VERSION=0.1.0 task release)
+    deps: [build]
+    cmds:
+      - git tag {{.VERSION}} -m "Release {{.BIN_NAME}} v{{.VERSION}}"
+      - git push origin main {{.VERSION}}
+
   test:
     desc: Run all available tests (verbose)
     cmds:
