@@ -4,13 +4,17 @@ version: 2
 
 project_name: gosume
 
+env:
+  - BIN_NAME=gosume
+
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - main: ./cmd/gosume
-    binary: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - id: "gosume"
+    main: ./cmd/{{ .Env.BIN_NAME }}
+    binary: "{{ .Env.BIN_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     env:
       - CGO_ENABLED=0
     goos:
@@ -22,11 +26,14 @@ builds:
 
 archives:
   - format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .Env.BIN_NAME }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
-  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  name_template: "{{ .Env.BIN_NAME }}_{{ .Version }}_checksums.txt"
   algorithm: sha256
 
 snapshot:
   name_template: "{{ incpatch .Version }}-dev"
+
+changelog:
+  disable: true
