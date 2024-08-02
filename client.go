@@ -2,12 +2,12 @@ package gosume
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/aws-sdk-go-v2/service/sts/types"
 	"github.com/charmbracelet/log"
+	"github.com/go-errors/errors"
 )
 
 func NewClientFromConfig(sourceConfig *aws.Config) Client {
@@ -31,7 +31,7 @@ func (c *Client) AssumeRole(ctx context.Context, targetRoleArn string) (*types.C
 		RoleSessionName: &c.SessionName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("could not assume roleArn %s: \n\t%w", targetRoleArn, err)
+		return nil, errors.Errorf("could not assume roleArn %s: \n\t%w", targetRoleArn, err)
 	}
 	cfg, err := createConfigFromStaticCredentials(ctx, session.Credentials)
 	c.config = cfg

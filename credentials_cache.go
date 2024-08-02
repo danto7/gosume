@@ -2,13 +2,13 @@ package gosume
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/aws/aws-sdk-go-v2/service/sts/types"
 	"github.com/charmbracelet/log"
+	"github.com/go-errors/errors"
 )
 
 const GOSUME_CACHE_FILENAME = "gosume-cache.json"
@@ -30,7 +30,7 @@ type CredentialsCache struct {
 func NewCredentialsCache() (*CredentialsCache, error) {
 	cachePath, err := xdg.CacheFile(GOSUME_CACHE_FILENAME)
 	if err != nil {
-		return nil, fmt.Errorf("could not determine cache location: %w", err)
+		return nil, errors.Errorf("could not determine cache location: %w", err)
 	}
 	log.Debug("found cache file", "filename", cachePath)
 
@@ -45,12 +45,12 @@ func NewCredentialsCache() (*CredentialsCache, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("could not read cache file '%s': %w", cachePath, err)
+		return nil, errors.Errorf("could not read cache file '%s': %w", cachePath, err)
 	}
 
 	err = json.Unmarshal(content, &cache.cache)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal cache file '%s': %w", cachePath, err)
+		return nil, errors.Errorf("could not unmarshal cache file '%s': %w", cachePath, err)
 	}
 	return cache, nil
 }
@@ -58,11 +58,11 @@ func NewCredentialsCache() (*CredentialsCache, error) {
 func (cc *CredentialsCache) writeCredentialsCacheToDisk() error {
 	json, err := json.Marshal(cc.cache)
 	if err != nil {
-		return fmt.Errorf("could not marshal cache: %w", err)
+		return errors.Errorf("could not marshal cache: %w", err)
 	}
 	err = os.WriteFile(cc.cachePath, json, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("could not write cache to disk: %w", err)
+		return errors.Errorf("could not write cache to disk: %w", err)
 	}
 	return nil
 }

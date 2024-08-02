@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume/internal/subcmds"
+	"github.com/go-errors/errors"
 
 	"github.com/urfave/cli/v2"
 )
@@ -58,6 +60,13 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("wurst")
+		if err, ok := err.(*errors.Error); ok {
+			fmt.Println("wurst2")
+			fmt.Println(err.ErrorStack())
+		} else {
+			fmt.Println("wurst3")
+			log.Fatal(err)
+		}
 	}
 }

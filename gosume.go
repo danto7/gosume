@@ -2,10 +2,10 @@ package gosume
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/charmbracelet/log"
+	"github.com/go-errors/errors"
 )
 
 func New() (*Gosume, error) {
@@ -34,7 +34,7 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 	profileChain := g.getRoleChain(targetProfileName)
 
 	if len(*profileChain) == 0 {
-		return nil, fmt.Errorf("could not find a profile chain for %s", targetProfileName)
+		return nil, errors.Errorf("could not find a profile chain for %s", targetProfileName)
 	}
 
 	// TODO: this needs heavy refactoring after tests
@@ -44,7 +44,7 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 		if i == 0 {
 			c, err := g.getSourceCredentials(ctx, profileName)
 			if err != nil {
-				return nil, fmt.Errorf("could not get source credentials: \n\t%w", err)
+				return nil, errors.Errorf("could not get source credentials: \n\t%w", err)
 			}
 			client := NewClientFromConfig(c)
 			gosumeClient = &client
@@ -56,20 +56,20 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 
 		roleArn := g.config.roleArn(profileName)
 		if roleArn == "" && i != 0 {
-			return nil, fmt.Errorf("Profile %s has no role_arn. Can not continue", profileName)
+			return nil, errors.Errorf("Profile %s has no role_arn. Can not continue", profileName)
 		}
 		log.Debugf("assumed profile %s", profileName)
 
 		credentials, err := gosumeClient.AssumeRole(ctx, roleArn)
 		g.cache.setCredentials(profileName, "eu-central-1", credentials)
 		if err != nil {
-			return nil, fmt.Errorf("could not create config from session credentials: \n%w", err)
+			return nil, errors.Errorf("could not create config from session credentials: \n%w", err)
 		}
 	}
 
 	err := g.cache.writeCredentialsCacheToDisk()
 	if err != nil {
-		return nil, fmt.Errorf("could not write credentials cache to disk: \n\t%w", err)
+		return nil, errors.Errorf("could not write credentials cache to disk: \n\t%w", err)
 	}
 	config := gosumeClient.Config()
 	return &config, nil

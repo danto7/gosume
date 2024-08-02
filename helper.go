@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/aws-sdk-go-v2/service/sts/types"
 	"github.com/charmbracelet/log"
+	"github.com/go-errors/errors"
 )
 
 type profileChain []string
@@ -44,13 +45,13 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 	}
 
 	if g.config.credentials(profileName) == nil {
-		return nil, fmt.Errorf("could not find valid long lived credentials for profile %s", profileName)
+		return nil, errors.Errorf("could not find valid long lived credentials for profile %s", profileName)
 	}
 
 	conf, err := awsConfig.LoadDefaultConfig(ctx,
 		awsConfig.WithSharedConfigProfile(profileName))
 	if err != nil {
-		return nil, fmt.Errorf("could not load config for profile '%s': \n\t%w", profileName, err)
+		return nil, errors.Errorf("could not load config for profile '%s': \n\t%w", profileName, err)
 	}
 	// creds, err := conf.Credentials.Retrieve(ctx)
 	// if err != nil {
@@ -63,7 +64,7 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 	if mfaDevice := g.config.mfaSerial(profileName); mfaDevice != "" {
 		token, err := readTokenCode()
 		if err != nil {
-			return nil, fmt.Errorf("could not to read totp: \n\t%w", err)
+			return nil, errors.Errorf("could not to read totp: \n\t%w", err)
 		}
 
 		sessionTokenInput.SerialNumber = &mfaDevice
@@ -72,7 +73,7 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 
 	session, err := stsClient.GetSessionToken(ctx, &sessionTokenInput)
 	if err != nil {
-		return nil, fmt.Errorf("could not create temporary credentials for %s: \n\t%w", profileName, err)
+		return nil, errors.Errorf("could not create temporary credentials for %s: \n\t%w", profileName, err)
 	}
 
 	g.cache.setCredentials(profileName, "eu-central-1", session.Credentials)

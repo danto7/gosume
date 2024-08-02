@@ -9,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume"
+	"github.com/go-errors/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,20 +19,20 @@ func Execute(cliCtx *cli.Context) error {
 	command := cliCtx.Args().Tail()
 	log.Debug("exec", "profileName", profileName, "command", command)
 	if len(command) <= 0 {
-		return fmt.Errorf("a command is required")
+		return errors.Errorf("a command is required")
 	}
 
 	gs, err := gosume.New()
 	if err != nil {
-		return fmt.Errorf("could not initialize gosume: \n%w", err)
+		return errors.Errorf("could not initialize gosume: \n%w", err)
 	}
 	cfg, err := gs.AssumeProfile(ctx, profileName)
 	if err != nil {
-		return fmt.Errorf("could not assume profile: \n%w", err)
+		return errors.Errorf("could not assume profile: \n%w", err)
 	}
 	credentials, err := cfg.Credentials.Retrieve(ctx)
 	if err != nil {
-		return fmt.Errorf("could not get credentials: \n%w", err)
+		return errors.Errorf("could not get credentials: \n%w", err)
 	}
 	env := []string{
 		fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", credentials.AccessKeyID),

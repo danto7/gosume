@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume"
+	"github.com/go-errors/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -19,13 +20,13 @@ func Assume(cliCtx *cli.Context) error {
 
 	gs, err := gosume.New()
 	if err != nil {
-		return fmt.Errorf("could not create gosume: %w", err)
+		return errors.Errorf("could not create gosume: %w", err)
 	}
 
 	ctx := cliCtx.Context
 	config, err := gs.AssumeProfile(ctx, profileName)
 	if err != nil {
-		return fmt.Errorf("could not assume profile: %w", err)
+		return errors.Errorf("could not assume profile: %w", err)
 	}
 
 	if !cliCtx.Bool("print-secrets") {
@@ -36,7 +37,7 @@ func Assume(cliCtx *cli.Context) error {
 		if cliCtx.Bool("print-secrets") {
 			credentials, err := config.Credentials.Retrieve(ctx)
 			if err != nil {
-				return fmt.Errorf("could not get credentials: \n%w", err)
+				return errors.Errorf("could not get credentials: \n%w", err)
 			}
 			fmt.Printf("AWS_ACCESS_KEY_ID=%s\n", credentials.AccessKeyID)
 			fmt.Printf("AWS_SECRET_ACCESS_KEY=%s\n", credentials.SecretAccessKey)
@@ -53,7 +54,7 @@ func Assume(cliCtx *cli.Context) error {
 
 	identity, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		return fmt.Errorf("could not get caller identity: %w", err)
+		return errors.Errorf("could not get caller identity: %w", err)
 	}
 	log.Info("Identity", "userid", *identity.UserId, "account", *identity.Account, "arn", *identity.Arn)
 	log.Warn("Your shell is not correctly configured for this command. See `gosume completion help` for more information")

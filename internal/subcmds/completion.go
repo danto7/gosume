@@ -2,10 +2,10 @@ package subcmds
 
 import (
 	_ "embed"
-	"fmt"
 	"os"
 	"text/template"
 
+	"github.com/go-errors/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -36,7 +36,7 @@ func Completion(cliCtx *cli.Context) error {
 	if shell == "fish" {
 		err = fishTemplate.Execute(os.Stdout, params)
 	} else {
-		return fmt.Errorf("The shell type '%s' is not supported yet.", shell)
+		return errors.Errorf("The shell type '%s' is not supported yet.", shell)
 	}
 
 	return err
