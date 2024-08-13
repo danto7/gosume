@@ -40,7 +40,7 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: --verbose
+          args: --verbose --latest
         env:
           OUTPUT: CHANGELOG.md
 
