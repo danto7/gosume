@@ -22,6 +22,12 @@ tasks:
       - mkdir -p bin
       - mv {{.BIN_NAME}}_{{.GOOS}}_{{.GOARCH}} bin/
 
+  # https://git-cliff.org/
+  changelog:
+    desc: Generate CHANGELOG.md
+    cmds:
+      - git-cliff --tag {{.VERSION}} -o
+
   clean:
     desc: Clean temp files and folders
     cmds:
@@ -48,10 +54,14 @@ tasks:
 
   release:
     desc: Release a new version of gosume (e.g. VERSION=v0.1.0 task release)
-    deps: [build]
+    deps: [build, changelog]
     cmds:
+      - git add CHANGELOG.md
+      - git commit -m "{{.GIT_DOCS}} update CHANGELOG.md for {{.BIN_NAME}} release {{.VERSION}}"
       - git tag {{.VERSION}} -m "Release {{.BIN_NAME}} {{.VERSION}}"
       - git push origin main {{.VERSION}}
+    vars:
+      GIT_DOCS: "docs(CHANGELOG):"
 
   test:
     desc: Run all available tests (verbose)
