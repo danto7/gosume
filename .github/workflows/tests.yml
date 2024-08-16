@@ -1,0 +1,9 @@
+name: run go tests
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "actions/checkout@v3"
+      - uses: jdx/mise-action@v2
+      - run: task test
