@@ -2,15 +2,28 @@ name: run go tests
 on: push
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - name: ubuntu-latest
+            cache_path: |
+              ~/.cache/go-build
+              ~/go/pkg/mod
+          - name: macos-latest
+            cache_path: |
+              ~/Library/Caches/go-build
+              ~/go/pkg/mod
+          - name: windows-latest
+            cache_path: |
+              ~\AppData\Local\go-build
+              ~\go\pkg\mod
+    runs-on: ${{ matrix.os.name }}
     steps:
       - uses: "actions/checkout@v3"
       - uses: jdx/mise-action@v2
       - uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
+          path: ${{ matrix.os.cache_path }}
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
