@@ -13,10 +13,10 @@ jobs:
             cache_path: |
               ~/Library/Caches/go-build
               ~/go/pkg/mod
-          - name: windows-latest
-            cache_path: |
-              ~\AppData\Local\go-build
-              ~\go\pkg\mod
+          #- name: windows-latest
+          #  cache_path: |
+          #    ~\AppData\Local\go-build
+          #    ~\go\pkg\mod
     runs-on: ${{ matrix.os.name }}
     steps:
       - uses: "actions/checkout@v3"
