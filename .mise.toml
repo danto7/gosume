@@ -1,3 +1,6 @@
 [tools]
 go = "1.23"
 task = "latest"
+
+[env]
+_.file = '.env'
