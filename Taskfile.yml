@@ -34,6 +34,14 @@ tasks:
       - rm -rf ./dist/
       - rm -rf ./bin/
 
+  clean-gosume-cache:
+    desc: Clean gosume-cache.json
+    cmds:
+      - rm -rf $XDG_CACHE_HOME/gosume-cache.json
+    preconditions:
+      - sh: test -f $XDG_CACHE_HOME/gosume-cache.json
+        msg: "gosume-cache.json not found. Did you set XDG_CACHE_HOME?"
+
   default:
     desc: "Default task"
     cmds:
