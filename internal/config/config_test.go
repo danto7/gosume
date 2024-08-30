@@ -45,7 +45,7 @@ func setupGosumeConfig(t *testing.T, config_ini_raw, credential_ini_raw string) 
 		t.Error(err)
 	}
 
-	return conf
+	return &conf
 }
 
 func TestHasProfileExists(t *testing.T) {
