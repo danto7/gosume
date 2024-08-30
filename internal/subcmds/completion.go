@@ -13,12 +13,21 @@ import (
 var fishTemplateString string
 var fishTemplate *template.Template
 
+//go:embed shell_wrapper.zsh
+var zshTemplateString string
+var zshTemplate *template.Template
+
 func init() {
-	tmpl, err := template.New("fish-wrapper").Parse(fishTemplateString)
-	if err != nil {
-		panic(err)
+	mustParseTemplate := func(name, templateString string) *template.Template {
+		tmpl, err := template.New(name).Parse(templateString)
+		if err != nil {
+			panic(err)
+		}
+		return tmpl
 	}
-	fishTemplate = tmpl
+
+	fishTemplate = mustParseTemplate("fish-wrapper", fishTemplateString)
+	zshTemplate = mustParseTemplate("zsh-wrapper", zshTemplateString)
 }
 
 type shellCompletionParameters struct {
@@ -33,10 +42,13 @@ func Completion(cliCtx *cli.Context) error {
 		UpdateEnvironmentExitCode: ShellWrapperUpdateEnvironment.ExitCode(),
 	}
 	var err error
-	if shell == "fish" {
+	switch shell {
+	case "fish":
 		err = fishTemplate.Execute(os.Stdout, params)
-	} else {
-		return errors.Errorf("The shell type '%s' is not supported yet.", shell)
+	case "zsh":
+		err = zshTemplate.Execute(os.Stdout, params)
+	default:
+		return errors.Errorf("the shell type '%s' is not supported yet", shell)
 	}
 
 	return err
