@@ -67,11 +67,20 @@ type integrationTestParameters struct {
 	AdditionalAwsConfig string
 }
 
+func isCommandAvailable(name string) bool {
+	cmd := exec.Command("/bin/sh", "-c", "command -v "+name)
+	err := cmd.Run()
+	return err == nil
+}
+
 func TestWithValidAWSCredentials(t *testing.T) {
 	awsAccessKeyId := os.Getenv("GOSUME_AWS_ACCESS_KEY_ID")
 	awsSecretAccessKey := os.Getenv("GOSUME_AWS_SECRET_ACCESS_KEY")
 	if awsAccessKeyId == "" || awsSecretAccessKey == "" {
 		t.Skip("there are no valid aws credentials to test assume against the aws api")
+	}
+	if !isCommandAvailable("fish") {
+		t.Fatal("fish shell is not available")
 	}
 
 	params := integrationTestParameters{
