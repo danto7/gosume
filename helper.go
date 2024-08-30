@@ -22,9 +22,9 @@ type profileChain []string
 func (g *Gosume) getRoleChain(targetProfile string) *profileChain {
 	profileChain := make(profileChain, 0)
 	currentProfile := targetProfile
-	for g.config.hasProfile(currentProfile) {
+	for g.config.HasProfile(currentProfile) {
 		profileChain = append(profileChain, currentProfile)
-		sourceProfile := g.config.sourceProfile(currentProfile)
+		sourceProfile := g.config.SourceProfile(currentProfile)
 		currentProfile = sourceProfile
 	}
 
@@ -44,30 +44,27 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 		return createConfigFromStaticCredentials(ctx, credentials)
 	}
 
-	if g.config.credentials(profileName) == nil {
-		return nil, errors.Errorf("could not find valid long lived credentials for profile %s", profileName)
-	}
-
 	conf, err := awsConfig.LoadDefaultConfig(ctx,
 		awsConfig.WithSharedConfigProfile(profileName))
 	if err != nil {
-		return nil, errors.Errorf("could not load config for profile '%s': \n\t%w", profileName, err)
+		return nil, errors.Errorf("could not create aws config with profile %s: %w", profileName, err)
 	}
-	// creds, err := conf.Credentials.Retrieve(ctx)
-	// if err != nil {
-	// 	log.Fatalf("could not retrieve credentials for profile %s: %v", profileName, err)
-	// }
-	// log.Debug("Loaded config for profile", "profileName", profileName, "accessKeyId", creds.AccessKeyID)
+
+	mfaSerial := g.config.MfaSerial(profileName)
+	if mfaSerial == "" {
+		return &conf, nil
+	}
+
 	stsClient := sts.NewFromConfig(conf)
 
 	sessionTokenInput := sts.GetSessionTokenInput{}
-	if mfaDevice := g.config.mfaSerial(profileName); mfaDevice != "" {
+	if mfaSerial != "" {
 		token, err := readTokenCode()
 		if err != nil {
 			return nil, errors.Errorf("could not to read totp: \n\t%w", err)
 		}
 
-		sessionTokenInput.SerialNumber = &mfaDevice
+		sessionTokenInput.SerialNumber = &mfaSerial
 		sessionTokenInput.TokenCode = &token
 	}
 
