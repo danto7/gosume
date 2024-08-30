@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/charmbracelet/log"
+	"github.com/danto7/gosume/internal/config"
 	"github.com/go-errors/errors"
 )
 
@@ -14,21 +15,23 @@ func New() (*Gosume, error) {
 		return nil, err
 	}
 
-	conf, err := newGosumeConfig()
+	conf, err := config.New()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Gosume{
-		config: conf,
+		config: &conf,
 		cache:  cache,
 	}, nil
 }
 
 type Gosume struct {
-	config *gosumeConfig
+	config *config.GosumeConfig
 	cache  *CredentialsCache
 }
+
+var AssumeError = errors.New("assume error")
 
 func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*aws.Config, error) {
 	profileChain := g.getRoleChain(targetProfileName)
@@ -40,11 +43,11 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 	// TODO: this needs heavy refactoring after tests
 	var gosumeClient *Client
 	for i, profileName := range *profileChain {
-		log.Debugf("assuming profile %s", profileName)
+		log.Debugf("assuming profile '%s'", profileName)
 		if i == 0 {
 			c, err := g.getSourceCredentials(ctx, profileName)
 			if err != nil {
-				return nil, errors.Errorf("could not get source credentials: \n\t%w", err)
+				return nil, errors.Errorf("could not get source credentials: %w", err)
 			}
 			client := NewClientFromConfig(c)
 			gosumeClient = &client
@@ -54,7 +57,7 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 			panic("cfg should never be nil")
 		}
 
-		roleArn := g.config.roleArn(profileName)
+		roleArn := g.config.RoleArn(profileName)
 		if roleArn == "" && i != 0 {
 			return nil, errors.Errorf("Profile %s has no role_arn. Can not continue", profileName)
 		}
@@ -63,8 +66,9 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 		credentials, err := gosumeClient.AssumeRole(ctx, roleArn)
 		g.cache.setCredentials(profileName, "eu-central-1", credentials)
 		if err != nil {
-			return nil, errors.Errorf("could not create config from session credentials: \n%w", err)
+			return nil, errors.Errorf("could not create config from session credentials: %w", err)
 		}
+		log.Debug("after cache")
 	}
 
 	err := g.cache.writeCredentialsCacheToDisk()

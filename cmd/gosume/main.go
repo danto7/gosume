@@ -12,6 +12,13 @@ import (
 )
 
 func main() {
+	level, err := log.ParseLevel(os.Getenv("GOSUME_LOG_LEVEL"))
+	if err != nil {
+		level = log.InfoLevel
+	}
+	log.SetLevel(level)
+	log.Debugf("log level set to %s", log.GetLevel())
+
 	if log.GetLevel() == log.DebugLevel {
 		log.SetReportCaller(true)
 	} else {
@@ -58,14 +65,12 @@ func main() {
 		},
 	}
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
-		fmt.Println("wurst")
 		if err, ok := err.(*errors.Error); ok {
-			fmt.Println("wurst2")
+			fmt.Println()
 			fmt.Println(err.ErrorStack())
 		} else {
-			fmt.Println("wurst3")
 			log.Fatal(err)
 		}
 	}

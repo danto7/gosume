@@ -11,7 +11,6 @@ require (
 	github.com/charmbracelet/log v0.4.0
 	github.com/go-errors/errors v1.5.1
 	github.com/urfave/cli/v2 v2.27.4
-	gopkg.in/ini.v1 v1.67.0
 )
 
 require (
