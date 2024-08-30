@@ -29,7 +29,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - run: task test
+      - uses: ConorMacBride/install-package@v1.1.0
+        with:
+          brew: fish
+          apt: fish
+      - name: run tests
+        run: task test
         env:
           GOSUME_AWS_ACCESS_KEY_ID: ${{ secrets.GOSUME_AWS_ACCESS_KEY_ID }}
           GOSUME_AWS_SECRET_ACCESS_KEY: ${{ secrets.GOSUME_AWS_SECRET_ACCESS_KEY }}
