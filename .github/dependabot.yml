@@ -12,3 +12,7 @@ updates:
     assignees:
       - "danto7"
       - "untcha"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
