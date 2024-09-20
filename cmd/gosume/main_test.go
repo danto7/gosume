@@ -42,9 +42,9 @@ type ShellTestSetupTemplateParameters struct {
 const testSetupScript = `
 export GOSUME_LOG_LEVEL=debug
 
-export XDG_CONFIG_HOME={{ .TestDir }}
-export XDG_CACHE_HOME={{ .TestDir }}
-export XDG_DATA_HOME={{ .TestDir }}
+export XDG_CONFIG_HOME='{{ .TestDir }}'
+export XDG_CACHE_HOME='{{ .TestDir }}'
+export XDG_DATA_HOME='{{ .TestDir }}'
 export AWS_CONFIG_FILE
 export AWS_SHARED_CREDENTIALS_FILE
 
