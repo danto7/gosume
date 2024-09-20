@@ -106,12 +106,6 @@ func (shell shellType) String() string {
 	panic(fmt.Sprintf("unknown shell %T", shell))
 }
 
-func isCommandAvailable(name string) bool {
-	cmd := exec.Command("/bin/sh", "-c", "command -v "+name)
-	err := cmd.Run()
-	return err == nil
-}
-
 func TestWithValidAWSCredentials(t *testing.T) {
 	awsAccessKeyId := os.Getenv("GOSUME_AWS_ACCESS_KEY_ID")
 	awsSecretAccessKey := os.Getenv("GOSUME_AWS_SECRET_ACCESS_KEY")
