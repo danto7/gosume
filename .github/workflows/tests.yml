@@ -31,8 +31,8 @@ jobs:
             ${{ runner.os }}-go-
       - uses: ConorMacBride/install-package@v1.1.0
         with:
-          brew: fish
-          apt: fish
+          brew: fish zsh
+          apt: fish zsh
       - name: run tests
         run: task test
         env:

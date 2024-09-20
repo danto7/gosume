@@ -39,7 +39,7 @@ type ShellTestSetupTemplateParameters struct {
 	TestDir    string
 }
 
-const fishTestSetup = `
+const testSetupScript = `
 export GOSUME_LOG_LEVEL=debug
 
 export XDG_CONFIG_HOME={{ .TestDir }}
@@ -56,7 +56,6 @@ echo --- $AWS_SHARED_CREDENTIALS_FILE ---
 cat $AWS_SHARED_CREDENTIALS_FILE | sed 's/\=.*$/= ***redacted***/'
 echo -----------------
 
-{{ .BinaryPath }} completion fish | source
 {{ .Script }}
 `
 
@@ -65,6 +64,46 @@ type integrationTestParameters struct {
 	AwsSecretAccessKey  string
 	BinaryPath          string
 	AdditionalAwsConfig string
+	Shell               shellType
+	Script              string
+}
+
+func (i *integrationTestParameters) evalShellCompletion(t *testing.T) string {
+	t.Helper()
+
+	if i.Shell == fish {
+		return fmt.Sprintf("%s completion fish | source", i.BinaryPath)
+	} else if i.Shell == zsh {
+		return fmt.Sprintf("eval \"$(%s completion zsh)\"", i.BinaryPath)
+	}
+	t.Fatalf("unsupported shell type %v", i.Shell)
+	return ""
+}
+
+func (i *integrationTestParameters) createCmd(t *testing.T, scriptPath string) *exec.Cmd {
+	if i.Shell == fish {
+		return exec.Command("fish", "-l", "--private", scriptPath)
+	} else if i.Shell == zsh {
+		return exec.Command("zsh", "-exo", "pipefail", "-c", scriptPath)
+	}
+	t.Fatalf("unsupported shell type %v", i.Shell)
+	return nil
+}
+
+type shellType int
+
+const (
+	fish shellType = iota
+	zsh
+)
+
+func (shell shellType) String() string {
+	if shell == fish {
+		return "fish"
+	} else if shell == zsh {
+		return "zsh"
+	}
+	panic(fmt.Sprintf("unknown shell %T", shell))
 }
 
 func isCommandAvailable(name string) bool {
@@ -79,9 +118,6 @@ func TestWithValidAWSCredentials(t *testing.T) {
 	if awsAccessKeyId == "" || awsSecretAccessKey == "" {
 		t.Skip("there are no valid aws credentials to test assume against the aws api")
 	}
-	if !isCommandAvailable("fish") {
-		t.Fatal("fish shell is not available")
-	}
 
 	params := integrationTestParameters{
 		AwsAccessKeyId:     awsAccessKeyId,
@@ -89,44 +125,73 @@ func TestWithValidAWSCredentials(t *testing.T) {
 		BinaryPath:         buildBinary(t),
 	}
 
-	t.Run("assume static credentials", func(t *testing.T) {
-		command := "gosume assume test-source"
-		output := runWithFish(t, &params, "", command)
-		t.Log(output)
+	for _, shell := range []shellType{fish, zsh} {
+		p := params
+		p.Shell = shell
 
-		if !strings.Contains(output, "Assumed profile test-source") {
-			t.Fail()
-		}
-	})
+		t.Run(p.Shell.String()+": assume static credentials", func(t *testing.T) {
+			p.Script = "gosume assume test-source"
+			output := runWithShell(t, p)
+			t.Log(output)
+
+			if !strings.Contains(output, "Assumed profile test-source") {
+				t.Fail()
+			}
+		})
+	}
 }
 
-func runWithFish(t *testing.T, params *integrationTestParameters, awsConfig string, script string) string {
+func runWithShell(t *testing.T, params integrationTestParameters) string {
 	testDir := t.TempDir()
-	tmpl, err := template.New("fishTestSetupTemplate").Parse(fishTestSetup)
+
+	env := prepareAwsTestConfig(t, testDir, params)
+
+	tmpl, err := template.New("testSetupScript").Parse(testSetupScript)
 	if err != nil {
 		t.Fatalf("could not parse %s template %s", tmpl.Name(), err)
 	}
 
-	var fishScript bytes.Buffer
-	err = tmpl.Execute(&fishScript, ShellTestSetupTemplateParameters{
+	var renderedScript bytes.Buffer
+	err = tmpl.Execute(&renderedScript, ShellTestSetupTemplateParameters{
 		BinaryPath: params.BinaryPath,
-		Script:     script,
 		TestDir:    testDir,
+		Script:     params.evalShellCompletion(t) + "\n" + params.Script,
 	})
 	expect(t, err, "template execution succeeded")
 
-	fishScriptPath := path.Join(testDir, "test.fish")
-	err = os.WriteFile(fishScriptPath, fishScript.Bytes(), 0700)
+	t.Logf("renderedScript: \n%s", &renderedScript)
+
+	scriptPath := path.Join(testDir, "test.sh")
+	err = os.WriteFile(scriptPath, renderedScript.Bytes(), 0700)
 	expect(t, err, "writing test script to tempdir")
+
+	var scriptOutput bytes.Buffer
+	cmd := params.createCmd(t, scriptPath)
+	cmd.Dir = testDir
+	cmd.Stdout = &scriptOutput
+	cmd.Stderr = &scriptOutput
+	cmd.Env = env
+
+	err = cmd.Run()
+	if err != nil {
+		t.Logf("test script: \n%s", &renderedScript)
+		t.Logf("test script result: \n%s", scriptOutput.String())
+
+		t.Fatalf("error while running script: %s", err)
+	}
+
+	return scriptOutput.String()
+}
+
+func prepareAwsTestConfig(t *testing.T, testDir string, params integrationTestParameters) []string {
 
 	awsConfigPath := path.Join(testDir, "aws_config")
 	config := strings.Join([]string{
 		`[profile test-source]`,
 		`region = eu-central-1`,
 		``,
-		awsConfig,
 	}, "\n")
-	err = os.WriteFile(awsConfigPath, []byte(config), 0600)
+	err := os.WriteFile(awsConfigPath, []byte(config), 0600)
 	expect(t, err, "writing aws config to test dir works")
 
 	awsCredentialPath := path.Join(testDir, "aws_credentials")
@@ -139,22 +204,8 @@ func runWithFish(t *testing.T, params *integrationTestParameters, awsConfig stri
 	err = os.WriteFile(awsCredentialPath, []byte(credentials), 0600)
 	expect(t, err, "writing aws credential to test dir works")
 
-	var scriptOutput bytes.Buffer
-	cmd := exec.Command("fish", "-l", "--private", fishScriptPath)
-	cmd.Dir = testDir
-	cmd.Stdout = &scriptOutput
-	cmd.Stderr = &scriptOutput
-	cmd.Env = []string{
+	return []string{
 		fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfigPath),
 		fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsCredentialPath),
 	}
-	err = cmd.Run()
-	if err != nil {
-		t.Logf("test script: \n%s", &fishScript)
-		t.Logf("test script result: \n%s", scriptOutput.String())
-		t.FailNow()
-	}
-	t.Log(os.ReadDir(testDir))
-
-	return scriptOutput.String()
 }
