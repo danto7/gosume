@@ -33,6 +33,11 @@ jobs:
         with:
           brew: fish zsh
           apt: fish zsh
+      - name: print versions
+        run: |
+          go version
+          fish --version
+          zsh --version
       - name: run tests
         run: task test
         env:
