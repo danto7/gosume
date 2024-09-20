@@ -1,14 +1,7 @@
 function gosume() {
-    if [[ $- == *e* ]]; then
-        set +e
-        {{ .BinaryPath }} --shell-wrapper $@
-        status=$?
-        set -e
-    else
-        {{ .BinaryPath }} --shell-wrapper $@
-        status=$?
-    fi
-    if [[ $status -eq "{{ .UpdateEnvironmentExitCode }}" ]] ; then
+    exitcode=0
+    {{ .BinaryPath }} --shell-wrapper $@ || exitcode=$?
+    if [[ $exitcode -eq "{{ .UpdateEnvironmentExitCode }}" ]] ; then
         output=$({{ .BinaryPath }} --shell-wrapper --print-secrets $@)
 
         IFS=$'='
@@ -20,6 +13,6 @@ function gosume() {
         return 0
     else
         echo "ERROR: Failed to update environment variables"
-        return $?
+        return $exitcode
     fi
 }

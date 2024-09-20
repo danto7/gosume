@@ -84,7 +84,7 @@ func (i *integrationTestParameters) createCmd(t *testing.T, scriptPath string) *
 	if i.Shell == fish {
 		return exec.Command("fish", "-l", "--private", scriptPath)
 	} else if i.Shell == zsh {
-		return exec.Command("zsh", "-exo", "pipefail", "-c", scriptPath)
+		return exec.Command("zsh", "-eo", "pipefail", scriptPath)
 	}
 	t.Fatalf("unsupported shell type %v", i.Shell)
 	return nil
