@@ -28,7 +28,7 @@ func main() {
 	}
 	app := &cli.App{
 		Name:  "gosume",
-		Usage: "make awsume even greater",
+		Usage: "make awsume Go brrrr",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:   "shell-wrapper",

@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/charmbracelet/log"
-	"github.com/danto7/gosume"
+	"github.com/danto7/gosume/internal/gosume"
 	"github.com/go-errors/errors"
 	"github.com/urfave/cli/v2"
 )

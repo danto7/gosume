@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/danto7/gosume"
+	"github.com/danto7/gosume/internal/gosume"
 	"github.com/go-errors/errors"
 	"github.com/urfave/cli/v2"
 )
