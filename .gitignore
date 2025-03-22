@@ -82,3 +82,5 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,go,visualstudiocode
 .env
+.envrc
+.direnv/
