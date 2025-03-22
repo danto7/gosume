@@ -1,13 +1,14 @@
 package completion
 
 import (
+	"context"
 	_ "embed"
 	"os"
 	"text/template"
 
 	"github.com/danto7/gosume/internal/assume"
 	"github.com/go-errors/errors"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 //go:embed shell_wrapper.fish
@@ -36,8 +37,8 @@ type shellCompletionParameters struct {
 	UpdateEnvironmentExitCode int
 }
 
-func Subcmd(cliCtx *cli.Context) error {
-	shell := cliCtx.Args().First()
+func Subcmd(ctx context.Context, cmd *cli.Command) error {
+	shell := cmd.Args().First()
 	params := shellCompletionParameters{
 		BinaryPath:                os.Args[0],
 		UpdateEnvironmentExitCode: assume.ShellWrapperUpdateEnvironment.ExitCode(),

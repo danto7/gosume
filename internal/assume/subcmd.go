@@ -1,19 +1,20 @@
 package assume
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume/internal/gosume"
 	"github.com/go-errors/errors"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var ShellWrapperUpdateEnvironment = cli.Exit("", 42)
 
-func Subcmd(cliCtx *cli.Context) error {
-	profileName := cliCtx.Args().First()
+func Subcmd(ctx context.Context, cmd *cli.Command) error {
+	profileName := cmd.Args().First()
 	if profileName == "" {
 		return cli.Exit("Please provide a profile name", 1)
 	}
@@ -23,18 +24,17 @@ func Subcmd(cliCtx *cli.Context) error {
 		return errors.Errorf("could not create gosume: %w", err)
 	}
 
-	ctx := cliCtx.Context
 	config, err := gs.AssumeProfile(ctx, profileName)
 	if err != nil {
 		return errors.Errorf("could not assume profile: %w", err)
 	}
 
-	if !cliCtx.Bool("print-secrets") {
+	if !cmd.Bool("print-secrets") {
 		log.Infof("Assumed profile %s", profileName)
 	}
 
-	if cliCtx.Bool("shell-wrapper") {
-		if cliCtx.Bool("print-secrets") {
+	if cmd.Bool("shell-wrapper") {
+		if cmd.Bool("print-secrets") {
 			credentials, err := config.Credentials.Retrieve(ctx)
 			if err != nil {
 				return errors.Errorf("could not get credentials: \n%w", err)

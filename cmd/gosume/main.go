@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/danto7/gosume/internal/execute"
 	"github.com/go-errors/errors"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	} else {
 		log.SetReportTimestamp(false)
 	}
-	app := &cli.App{
+	cmd := &cli.Command{
 		Name:  "gosume",
 		Usage: "make awsume Go brrrr",
 		Flags: []cli.Flag{
@@ -67,7 +68,7 @@ func main() {
 		},
 	}
 
-	err = app.Run(os.Args)
+	err = cmd.Run(context.Background(), os.Args)
 	if err != nil {
 		if err, ok := err.(*errors.Error); ok {
 			fmt.Println()

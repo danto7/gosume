@@ -1,6 +1,7 @@
 package execute
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,13 +11,12 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume/internal/gosume"
 	"github.com/go-errors/errors"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-func Subcmd(cliCtx *cli.Context) error {
-	ctx := cliCtx.Context
-	profileName := cliCtx.Args().First()
-	command := cliCtx.Args().Tail()
+func Subcmd(ctx context.Context, cmd *cli.Command) error {
+	profileName := cmd.Args().First()
+	command := cmd.Args().Tail()
 	log.Debug("exec", "profileName", profileName, "command", command)
 	if len(command) <= 0 {
 		return errors.Errorf("a command is required")
@@ -46,11 +46,11 @@ func Subcmd(cliCtx *cli.Context) error {
 		return strings.HasPrefix(elem, "AWS_")
 	})
 
-	cmd := exec.Command(command[0], command[1:]...)
-	cmd.Env = append(inheritedEnv, env...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	log.Debug("run command", "cmd", cmd)
-	return cmd.Run()
+	proc := exec.Command(command[0], command[1:]...)
+	proc.Env = append(inheritedEnv, env...)
+	proc.Stdout = os.Stdout
+	proc.Stderr = os.Stderr
+	proc.Stdin = os.Stdin
+	log.Debug("run command", "cmd", proc)
+	return proc.Run()
 }
