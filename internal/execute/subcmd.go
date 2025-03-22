@@ -1,4 +1,4 @@
-package subcmds
+package execute
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func Execute(cliCtx *cli.Context) error {
+func Subcmd(cliCtx *cli.Context) error {
 	ctx := cliCtx.Context
 	profileName := cliCtx.Args().First()
 	command := cliCtx.Args().Tail()

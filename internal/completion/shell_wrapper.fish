@@ -1,7 +1,8 @@
 function gosume -w gosume -d "wraps the gosume command integrate with the shell"
-  {{ .BinaryPath }} --shell-wrapper $argv
+  set -l gosume (command -v gosume)
+  $gosume --shell-wrapper $argv
   if test $status -eq "{{ .UpdateEnvironmentExitCode }}"
-    set -l output ({{ .BinaryPath }} --shell-wrapper --print-secrets $argv)
+    set -l output ($gosume --shell-wrapper --print-secrets $argv)
 
     set -l env_whitelist AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION AWS_SESSION_TOKEN
     for line in $output

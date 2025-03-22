@@ -1,4 +1,4 @@
-package subcmds
+package assume
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 var ShellWrapperUpdateEnvironment = cli.Exit("", 42)
 
-func Assume(cliCtx *cli.Context) error {
+func Subcmd(cliCtx *cli.Context) error {
 	profileName := cliCtx.Args().First()
 	if profileName == "" {
 		return cli.Exit("Please provide a profile name", 1)

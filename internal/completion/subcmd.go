@@ -1,10 +1,11 @@
-package subcmds
+package completion
 
 import (
 	_ "embed"
 	"os"
 	"text/template"
 
+	"github.com/danto7/gosume/internal/assume"
 	"github.com/go-errors/errors"
 	"github.com/urfave/cli/v2"
 )
@@ -35,11 +36,11 @@ type shellCompletionParameters struct {
 	UpdateEnvironmentExitCode int
 }
 
-func Completion(cliCtx *cli.Context) error {
+func Subcmd(cliCtx *cli.Context) error {
 	shell := cliCtx.Args().First()
 	params := shellCompletionParameters{
 		BinaryPath:                os.Args[0],
-		UpdateEnvironmentExitCode: ShellWrapperUpdateEnvironment.ExitCode(),
+		UpdateEnvironmentExitCode: assume.ShellWrapperUpdateEnvironment.ExitCode(),
 	}
 	var err error
 	switch shell {

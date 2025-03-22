@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
-	"github.com/danto7/gosume/internal/subcmds"
+	"github.com/danto7/gosume/internal/assume"
+	"github.com/danto7/gosume/internal/completion"
+	"github.com/danto7/gosume/internal/execute"
 	"github.com/go-errors/errors"
 
 	"github.com/urfave/cli/v2"
@@ -45,21 +47,21 @@ func main() {
 			{
 				Name:        "completion",
 				Description: "print the shell completion code for the specified shell",
-				Action:      subcmds.Completion,
+				Action:      completion.Subcmd,
 				ArgsUsage:   " <shell name>",
 			},
 			{
 				Name:        "exec",
 				Aliases:     []string{"e"},
-				Description: "execute a command with the give profile",
-				Action:      subcmds.Execute,
+				Description: "execute a command with the given profile",
+				Action:      execute.Subcmd,
 				ArgsUsage:   " <profile name> <command>",
 			},
 			{
 				Name:        "assume",
 				Aliases:     []string{"a"},
 				Description: "assume the given profile",
-				Action:      subcmds.Assume,
+				Action:      assume.Subcmd,
 				ArgsUsage:   " <profile name>",
 			},
 		},
