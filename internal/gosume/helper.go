@@ -73,7 +73,7 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 		return nil, errors.Errorf("could not create temporary credentials for %s: \n\t%w", profileName, err)
 	}
 
-	g.cache.setCredentials(profileName, "eu-central-1", session.Credentials)
+	g.cache.SetCredentials(profileName, "eu-central-1", session.Credentials)
 
 	return createConfigFromStaticCredentials(ctx, session.Credentials)
 }

@@ -1,11 +1,14 @@
-package gosume
+package cache
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sso"
 	"github.com/aws/aws-sdk-go-v2/service/sts/types"
 	"github.com/charmbracelet/log"
 	"github.com/go-errors/errors"
@@ -22,9 +25,39 @@ type CachedProfile struct {
 	Region          *string    `json:"region"`
 }
 
+type CachedSsoSession struct {
+	AccessToken  *string    `json:"access_token"`
+	ExpiresAt    *time.Time `json:"expires_at"`
+	RefreshToken *string    `json:"refresh_token"`
+	SsoRegion    *string    `json:"sso_region"`
+}
+
+func (c *CachedSsoSession) Expired() bool {
+	return time.Now().After(*c.ExpiresAt)
+}
+
+func (c *CachedSsoSession) Accounts(ctx context.Context) (*sso.ListAccountsPaginator, error) {
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(*c.SsoRegion))
+	if err != nil {
+		return nil, err
+	}
+
+	ssoClient := sso.NewFromConfig(cfg)
+	listAccountsInput := sso.ListAccountsInput{
+		AccessToken: c.AccessToken,
+	}
+	return sso.NewListAccountsPaginator(ssoClient, &listAccountsInput), nil
+}
+
 type CredentialsCache struct {
-	cache     map[string]*CachedProfile
 	cachePath string
+	cache     cache
+}
+
+type cache struct {
+	ProfileCache map[string]*CachedProfile    `json:"profile_cache"`
+	SsoCache     map[string]*CachedSsoSession `json:"sso_cache"`
 }
 
 func NewCredentialsCache() (*CredentialsCache, error) {
@@ -34,42 +67,39 @@ func NewCredentialsCache() (*CredentialsCache, error) {
 	}
 	log.Debug("found cache file", "filename", cachePath)
 
-	cache := &CredentialsCache{
+	cc := CredentialsCache{
 		cachePath: cachePath,
-		cache:     make(map[string]*CachedProfile),
 	}
-
 	content, err := os.ReadFile(cachePath)
 	if os.IsNotExist(err) {
-		return cache, nil
-	}
-
-	if err != nil {
+		return &cc, nil
+	} else if err != nil {
 		return nil, errors.Errorf("could not read cache file '%s': %w", cachePath, err)
 	}
 
-	err = json.Unmarshal(content, &cache.cache)
+	err = json.Unmarshal(content, &cc.cache)
 	if err != nil {
 		return nil, errors.Errorf("could not unmarshal cache file '%s': %w", cachePath, err)
 	}
-	return cache, nil
+	return &cc, nil
 }
 
-func (cc *CredentialsCache) writeCredentialsCacheToDisk() error {
-	json, err := json.Marshal(cc.cache)
+func (cc *CredentialsCache) Write() error {
+	log.Debug("writing cache to disk", "filename", cc.cachePath, "cache", cc)
+	data, err := json.Marshal(cc.cache)
 	if err != nil {
 		return errors.Errorf("could not marshal cache: %w", err)
 	}
-	err = os.WriteFile(cc.cachePath, json, os.ModePerm)
+	err = os.WriteFile(cc.cachePath, data, 0600)
 	if err != nil {
 		return errors.Errorf("could not write cache to disk: %w", err)
 	}
 	return nil
 }
 
-func (cc *CredentialsCache) setCredentials(profileName string, region string, credentials *types.Credentials) {
+func (cc *CredentialsCache) SetCredentials(profileName string, region string, credentials *types.Credentials) {
 	log.Debug("set cache", "profileName", profileName, "AccessKeyId", credentials.AccessKeyId)
-	cc.cache[profileName] = &CachedProfile{
+	cc.cache.ProfileCache[profileName] = &CachedProfile{
 		AccessKeyId:     credentials.AccessKeyId,
 		SecretAccessKey: credentials.SecretAccessKey,
 		SessionToken:    credentials.SessionToken,
@@ -79,13 +109,13 @@ func (cc *CredentialsCache) setCredentials(profileName string, region string, cr
 }
 
 func (cc *CredentialsCache) HasProfile(profileName string) bool {
-	profile, ok := cc.cache[profileName]
+	profile, ok := cc.cache.ProfileCache[profileName]
 	if !ok {
 		return false
 	}
 	if time.Now().After(*profile.Expiration) {
 		log.Debug("cache for the profile has expired", "profileName", profileName)
-		delete(cc.cache, profileName)
+		delete(cc.cache.ProfileCache, profileName)
 		return false
 	}
 	return true
@@ -95,5 +125,17 @@ func (cc *CredentialsCache) GetProfile(profileName string) *CachedProfile {
 	if !cc.HasProfile(profileName) {
 		return nil
 	}
-	return cc.cache[profileName]
+	return cc.cache.ProfileCache[profileName]
+}
+
+func (cc *CredentialsCache) SetSsoSession(ssoSession string, session *CachedSsoSession) {
+	cc.cache.SsoCache[ssoSession] = session
+}
+
+func (cc *CredentialsCache) CachedSsoSession(ssoSession string) *CachedSsoSession {
+	if session, ok := cc.cache.SsoCache[ssoSession]; ok {
+		return session
+	} else {
+		return nil
+	}
 }

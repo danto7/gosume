@@ -8,7 +8,9 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume/internal/assume"
 	"github.com/danto7/gosume/internal/completion"
+	"github.com/danto7/gosume/internal/config"
 	"github.com/danto7/gosume/internal/execute"
+	"github.com/danto7/gosume/internal/sso"
 	"github.com/go-errors/errors"
 
 	"github.com/urfave/cli/v3"
@@ -65,6 +67,12 @@ func main() {
 				Action:      assume.Subcmd,
 				ArgsUsage:   " <profile name>",
 			},
+			{
+				Name:        "sso",
+				Aliases:     []string{"s"},
+				Description: "assume the given profile using SSO",
+				Action:      subcmdWithConfig(sso.Subcmd),
+			},
 		},
 	}
 
@@ -76,5 +84,17 @@ func main() {
 		} else {
 			log.Fatal(err)
 		}
+	}
+}
+
+func subcmdWithConfig(action func(context.Context, *cli.Command, *config.AwsConfig) error) cli.ActionFunc {
+	config, err := config.NewConfig()
+	if err != nil {
+		return func(ctx context.Context, cmd *cli.Command) error {
+			return errors.Errorf("could not load aws config: %w", err)
+		}
+	}
+	return func(ctx context.Context, cmd *cli.Command) error {
+		return action(ctx, cmd, config)
 	}
 }
