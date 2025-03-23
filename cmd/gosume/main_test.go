@@ -81,6 +81,7 @@ func (i *integrationTestParameters) evalShellCompletion(t *testing.T) string {
 }
 
 func (i *integrationTestParameters) createCmd(t *testing.T, scriptPath string) *exec.Cmd {
+	t.Helper()
 	if i.Shell == fish {
 		return exec.Command("fish", "-l", "--private", scriptPath)
 	} else if i.Shell == zsh {
@@ -136,6 +137,7 @@ func TestWithValidAWSCredentials(t *testing.T) {
 }
 
 func runWithShell(t *testing.T, params integrationTestParameters) string {
+	t.Helper()
 	testDir := t.TempDir()
 
 	env := prepareAwsTestConfig(t, testDir, params)
@@ -178,7 +180,7 @@ func runWithShell(t *testing.T, params integrationTestParameters) string {
 }
 
 func prepareAwsTestConfig(t *testing.T, testDir string, params integrationTestParameters) []string {
-
+	t.Helper()
 	awsConfigPath := path.Join(testDir, "aws_config")
 	config := strings.Join([]string{
 		`[profile test-source]`,
