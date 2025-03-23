@@ -124,7 +124,8 @@ func TestWithValidAWSCredentials(t *testing.T) {
 		p.Shell = shell
 
 		t.Run(p.Shell.String()+": assume static credentials", func(t *testing.T) {
-			p.Script = "gosume assume test-source"
+			p.Script = fmt.Sprintf("export PATH=$PATH:%s\ngosume assume test-source",
+				path.Dir(params.BinaryPath))
 			output := runWithShell(t, p)
 			t.Log(output)
 
