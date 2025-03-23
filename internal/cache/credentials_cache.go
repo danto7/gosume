@@ -69,6 +69,10 @@ func NewCredentialsCache() (*CredentialsCache, error) {
 
 	cc := CredentialsCache{
 		cachePath: cachePath,
+		cache: cache{
+			ProfileCache: make(map[string]*CachedProfile),
+			SsoCache:     make(map[string]*CachedSsoSession),
+		},
 	}
 	content, err := os.ReadFile(cachePath)
 	if os.IsNotExist(err) {
@@ -128,12 +132,12 @@ func (cc *CredentialsCache) GetProfile(profileName string) *CachedProfile {
 	return cc.cache.ProfileCache[profileName]
 }
 
-func (cc *CredentialsCache) SetSsoSession(ssoSession string, session *CachedSsoSession) {
-	cc.cache.SsoCache[ssoSession] = session
+func (cc *CredentialsCache) SetSsoSession(sessionName string, session *CachedSsoSession) {
+	cc.cache.SsoCache[sessionName] = session
 }
 
-func (cc *CredentialsCache) CachedSsoSession(ssoSession string) *CachedSsoSession {
-	if session, ok := cc.cache.SsoCache[ssoSession]; ok {
+func (cc *CredentialsCache) CachedSsoSession(sessionName string) *CachedSsoSession {
+	if session, ok := cc.cache.SsoCache[sessionName]; ok {
 		return session
 	} else {
 		return nil

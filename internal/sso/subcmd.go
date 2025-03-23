@@ -42,7 +42,7 @@ func Subcmd(ctx context.Context, cmd *cli.Command, awsConf *config.AwsConfig) er
 			return errors.Errorf("could not find sso session %s", ssoSessionName)
 		}
 
-		cachedSession, err = deviceAuth(ctx, section, cache)
+		cachedSession, err = deviceAuth(ctx, ssoSessionName, section, cache)
 		if err != nil {
 			return errors.Errorf("device auth failed: %w", err)
 		}
@@ -67,8 +67,7 @@ func Subcmd(ctx context.Context, cmd *cli.Command, awsConf *config.AwsConfig) er
 	return nil
 }
 
-func deviceAuth(ctx context.Context, sessionConfig *ini.Section, creds *cache.CredentialsCache) (*cache.CachedSsoSession, error) {
-	ssoSessionName := sessionConfig.Name()
+func deviceAuth(ctx context.Context, ssoSessionName string, sessionConfig *ini.Section, creds *cache.CredentialsCache) (*cache.CachedSsoSession, error) {
 	region, err := sessionConfig.GetKey("sso_region")
 	if err != nil {
 		return nil, errors.Errorf("could not find sso region for session %s: %w", ssoSessionName, err)
