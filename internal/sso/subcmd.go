@@ -18,37 +18,36 @@ import (
 
 var ErrorDeviceAuthorizationTimeout = errors.Errorf("device authorization timeout")
 
-func Subcmd(ctx context.Context, cmd *cli.Command, awsConf *config.AwsConfig) error {
+func Subcmd(ctx context.Context, cmd *cli.Command, conf *config.Config) error {
 	cache, err := cache.NewCredentialsCache()
 	if err != nil {
 		log.Error("could not create credentials cache", "error", err)
 		return err
 	}
-	ssoSessionName := cmd.Args().First()
-	log.Debug("parameters", "ssoSessionName", ssoSessionName)
-	if ssoSessionName == "" {
+	sessionName := cmd.Args().First()
+	log.Debug("parameters", "sessionName", sessionName)
+	if sessionName == "" {
 		return errors.Errorf("no sso session")
 	}
 
-	cachedSession := cache.CachedSsoSession(ssoSessionName)
+	cachedSession := cache.CachedSsoSession(sessionName)
 	if cachedSession == nil {
-		log.Debug("no cached sso session found, starting device authorization", "session", ssoSessionName)
-		conf, err := config.NewConfig()
+		log.Debug("no cached sso session found, starting device authorization", "session", sessionName)
 		if err != nil {
 			return errors.Errorf("could not load aws config: %w", err)
 		}
-		section := conf.SsoSession(ssoSessionName)
+		section := conf.SsoSession(sessionName)
 		if section == nil {
-			return errors.Errorf("could not find sso session %s", ssoSessionName)
+			return errors.Errorf("could not find sso session %s", sessionName)
 		}
 
-		cachedSession, err = deviceAuth(ctx, ssoSessionName, section, cache)
+		cachedSession, err = deviceAuth(ctx, sessionName, section, cache)
 		if err != nil {
 			return errors.Errorf("device auth failed: %w", err)
 		}
 	}
 
-	log.Debug("using sso session", "session", ssoSessionName, "expires at", cachedSession.ExpiresAt)
+	log.Debug("using sso session", "session", sessionName, "expires at", cachedSession.ExpiresAt)
 	accounts, err := cachedSession.Accounts(ctx)
 	if err != nil {
 		return errors.Errorf("could not create sso client: %w", err)
@@ -67,14 +66,14 @@ func Subcmd(ctx context.Context, cmd *cli.Command, awsConf *config.AwsConfig) er
 	return nil
 }
 
-func deviceAuth(ctx context.Context, ssoSessionName string, sessionConfig *ini.Section, creds *cache.CredentialsCache) (*cache.CachedSsoSession, error) {
+func deviceAuth(ctx context.Context, sessionName string, sessionConfig *ini.Section, creds *cache.CredentialsCache) (*cache.CachedSsoSession, error) {
 	region, err := sessionConfig.GetKey("sso_region")
 	if err != nil {
-		return nil, errors.Errorf("could not find sso region for session %s: %w", ssoSessionName, err)
+		return nil, errors.Errorf("could not find sso region for session %s: %w", sessionName, err)
 	}
 	startUrl, err := sessionConfig.GetKey("sso_start_url")
 	if err != nil {
-		return nil, errors.Errorf("could not find sso start url for session %s: %w", ssoSessionName, err)
+		return nil, errors.Errorf("could not find sso start url for session %s: %w", sessionName, err)
 	}
 
 	cfg, err := awsConfig.LoadDefaultConfig(ctx,
@@ -128,7 +127,7 @@ func deviceAuth(ctx context.Context, ssoSessionName string, sessionConfig *ini.S
 		ExpiresAt:    &expiresAt,
 		SsoRegion:    aws.String(region.Value()),
 	}
-	creds.SetSsoSession(ssoSessionName, &session)
+	creds.SetSsoSession(sessionName, &session)
 	if err := creds.Write(); err != nil {
 		return nil, err
 	}

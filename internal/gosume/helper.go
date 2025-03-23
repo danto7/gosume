@@ -50,7 +50,11 @@ func (g *Gosume) getSourceCredentials(ctx context.Context, profileName string) (
 		return nil, errors.Errorf("could not create aws config with profile %s: %w", profileName, err)
 	}
 
-	mfaSerial := g.config.MfaSerial(profileName)
+	sharedConfig, err := g.config.AwsSharedConfig(profileName)
+	if err != nil {
+		return nil, errors.Errorf("could not load shared config for %s: %w", profileName, err)
+	}
+	mfaSerial := sharedConfig.MFASerial
 	if mfaSerial == "" {
 		return &conf, nil
 	}

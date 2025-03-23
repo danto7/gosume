@@ -19,7 +19,7 @@ func Subcmd(ctx context.Context, cmd *cli.Command) error {
 		return cli.Exit("Please provide a profile name", 1)
 	}
 
-	gs, err := gosume.New()
+	gs, err := gosume.New(ctx)
 	if err != nil {
 		return errors.Errorf("could not create gosume: %w", err)
 	}

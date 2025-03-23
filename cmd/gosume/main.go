@@ -87,8 +87,8 @@ func main() {
 	}
 }
 
-func subcmdWithConfig(action func(context.Context, *cli.Command, *config.AwsConfig) error) cli.ActionFunc {
-	config, err := config.NewConfig()
+func subcmdWithConfig(action func(context.Context, *cli.Command, *config.Config) error) cli.ActionFunc {
+	config, err := config.New()
 	if err != nil {
 		return func(ctx context.Context, cmd *cli.Command) error {
 			return errors.Errorf("could not load aws config: %w", err)

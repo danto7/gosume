@@ -10,7 +10,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
-func New() (*Gosume, error) {
+func New(ctx context.Context) (*Gosume, error) {
 	creds, err := cache.NewCredentialsCache()
 	if err != nil {
 		return nil, err
@@ -22,13 +22,13 @@ func New() (*Gosume, error) {
 	}
 
 	return &Gosume{
-		config: &conf,
+		config: conf,
 		cache:  creds,
 	}, nil
 }
 
 type Gosume struct {
-	config *config.GosumeConfig
+	config *config.Config
 	cache  *cache.CredentialsCache
 }
 
