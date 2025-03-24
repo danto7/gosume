@@ -26,7 +26,7 @@ func New() (*Config, error) {
 
 	sharedConfigFile := envConfig.SharedConfigFile
 	if sharedConfigFile == "" {
-		config.DefaultSharedConfigFilename()
+		sharedConfigFile = config.DefaultSharedConfigFilename()
 	}
 	sharedCredentialsFile := envConfig.SharedCredentialsFile
 	if sharedCredentialsFile == "" {

@@ -31,11 +31,15 @@ func Subcmd(ctx context.Context, cmd *cli.Command, conf *config.Config) error {
 	}
 
 	cachedSession := cache.CachedSsoSession(sessionName)
+	// TODO: Check if session is expired and refresh
+	if cachedSession != nil && cachedSession.Expired() {
+		log.Debug("cached sso session expired, attempting refresh")
+
+		return errors.Errorf("session expired")
+	}
 	if cachedSession == nil {
 		log.Debug("no cached sso session found, starting device authorization", "session", sessionName)
-		if err != nil {
-			return errors.Errorf("could not load aws config: %w", err)
-		}
+
 		section := conf.SsoSession(sessionName)
 		if section == nil {
 			return errors.Errorf("could not find sso session %s", sessionName)
@@ -47,7 +51,7 @@ func Subcmd(ctx context.Context, cmd *cli.Command, conf *config.Config) error {
 		}
 	}
 
-	log.Debug("using sso session", "session", sessionName, "expires at", cachedSession.ExpiresAt)
+	log.Debug("using sso session", "session", sessionName, "expires_at", cachedSession.ExpiresAt)
 	accounts, err := cachedSession.Accounts(ctx)
 	if err != nil {
 		return errors.Errorf("could not create sso client: %w", err)
