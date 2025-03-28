@@ -10,6 +10,7 @@ import (
 )
 
 func createTestCacheFileValid(t *testing.T, tmpPath string) error {
+	t.Helper()
 	cache := `
 	{
 		"profile_cache": {
@@ -69,7 +70,7 @@ func TestNewCredentialsCacheExists(t *testing.T) {
 		t.Errorf("oh no: %s", err)
 	}
 
-	cc, err := NewCredentialsCache()
+	cc, err := Load()
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
@@ -96,7 +97,7 @@ func TestNewCredentialsCacheNotExists(t *testing.T) {
 
 	xdg.Reload()
 
-	cache, err := NewCredentialsCache()
+	cache, err := Load()
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
@@ -129,7 +130,7 @@ func TestNewCredentialsCacheNotReadable(t *testing.T) {
 		t.Errorf("oh no: %s", err)
 	}
 
-	cache, err := NewCredentialsCache()
+	cache, err := Load()
 	if err == nil || cache != nil {
 		t.Errorf("oh no: %s", err)
 	}
@@ -152,7 +153,7 @@ func TestNewCredentialsCacheNotJSON(t *testing.T) {
 		t.Errorf("oh no: %s", err)
 	}
 
-	cache, err := NewCredentialsCache()
+	cache, err := Load()
 	if err == nil || cache != nil {
 		t.Errorf("oh no: %s", err)
 	}

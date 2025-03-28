@@ -1,14 +1,11 @@
 package cache
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"time"
 
 	"github.com/adrg/xdg"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/sso"
 	"github.com/aws/aws-sdk-go-v2/service/sts/types"
 	"github.com/charmbracelet/log"
 	"github.com/go-errors/errors"
@@ -25,31 +22,6 @@ type CachedProfile struct {
 	Region          *string    `json:"region"`
 }
 
-type CachedSsoSession struct {
-	AccessToken  *string    `json:"access_token"`
-	ExpiresAt    *time.Time `json:"expires_at"`
-	RefreshToken *string    `json:"refresh_token"`
-	SsoRegion    *string    `json:"sso_region"`
-}
-
-func (c *CachedSsoSession) Expired() bool {
-	return time.Now().After(*c.ExpiresAt)
-}
-
-func (c *CachedSsoSession) Accounts(ctx context.Context) (*sso.ListAccountsPaginator, error) {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(*c.SsoRegion))
-	if err != nil {
-		return nil, err
-	}
-
-	ssoClient := sso.NewFromConfig(cfg)
-	listAccountsInput := sso.ListAccountsInput{
-		AccessToken: c.AccessToken,
-	}
-	return sso.NewListAccountsPaginator(ssoClient, &listAccountsInput), nil
-}
-
 type CredentialsCache struct {
 	cachePath string
 	cache     cache
@@ -60,7 +32,7 @@ type cache struct {
 	SsoCache     map[string]*CachedSsoSession `json:"sso_cache"`
 }
 
-func NewCredentialsCache() (*CredentialsCache, error) {
+func Load() (*CredentialsCache, error) {
 	cachePath, err := xdg.CacheFile(GOSUME_CACHE_FILENAME)
 	if err != nil {
 		return nil, errors.Errorf("could not determine cache location: %w", err)
@@ -130,16 +102,4 @@ func (cc *CredentialsCache) GetProfile(profileName string) *CachedProfile {
 		return nil
 	}
 	return cc.cache.ProfileCache[profileName]
-}
-
-func (cc *CredentialsCache) SetSsoSession(sessionName string, session *CachedSsoSession) {
-	cc.cache.SsoCache[sessionName] = session
-}
-
-func (cc *CredentialsCache) CachedSsoSession(sessionName string) *CachedSsoSession {
-	if session, ok := cc.cache.SsoCache[sessionName]; ok {
-		return session
-	} else {
-		return nil
-	}
 }

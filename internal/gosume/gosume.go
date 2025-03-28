@@ -11,7 +11,7 @@ import (
 )
 
 func New(ctx context.Context) (*Gosume, error) {
-	creds, err := cache.NewCredentialsCache()
+	creds, err := cache.Load()
 	if err != nil {
 		return nil, err
 	}
