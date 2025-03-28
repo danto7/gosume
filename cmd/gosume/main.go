@@ -16,10 +16,18 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+var (
+	version = "dev"
+)
+
 func main() {
 	level, err := log.ParseLevel(os.Getenv("GOSUME_LOG_LEVEL"))
 	if err != nil {
-		level = log.InfoLevel
+		if version == "dev" {
+			level = log.DebugLevel
+		} else {
+			level = log.InfoLevel
+		}
 	}
 	log.SetLevel(level)
 	log.Debugf("log level set to %s", log.GetLevel())
@@ -30,8 +38,9 @@ func main() {
 		log.SetReportTimestamp(false)
 	}
 	cmd := &cli.Command{
-		Name:  "gosume",
-		Usage: "make awsume Go brrrr",
+		Name:    "gosume",
+		Usage:   "make awsume Go brrrr",
+		Version: version,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:   "shell-wrapper",
