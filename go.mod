@@ -12,7 +12,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.17
 	github.com/charmbracelet/log v0.4.1
 	github.com/go-errors/errors v1.5.1
+	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/urfave/cli/v3 v3.0.0-beta1
+)
+
+require (
+	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 )
 
 require (
@@ -33,4 +39,5 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/sys v0.30.0 // indirect
+	gopkg.in/ini.v1 v1.67.0
 )

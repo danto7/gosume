@@ -8,16 +8,26 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/danto7/gosume/internal/assume"
 	"github.com/danto7/gosume/internal/completion"
+	"github.com/danto7/gosume/internal/config"
 	"github.com/danto7/gosume/internal/execute"
+	"github.com/danto7/gosume/internal/sso"
 	"github.com/go-errors/errors"
 
 	"github.com/urfave/cli/v3"
 )
 
+var (
+	version = "dev"
+)
+
 func main() {
 	level, err := log.ParseLevel(os.Getenv("GOSUME_LOG_LEVEL"))
 	if err != nil {
-		level = log.InfoLevel
+		if version == "dev" {
+			level = log.DebugLevel
+		} else {
+			level = log.InfoLevel
+		}
 	}
 	log.SetLevel(level)
 	log.Debugf("log level set to %s", log.GetLevel())
@@ -28,8 +38,9 @@ func main() {
 		log.SetReportTimestamp(false)
 	}
 	cmd := &cli.Command{
-		Name:  "gosume",
-		Usage: "make awsume Go brrrr",
+		Name:    "gosume",
+		Usage:   "make awsume Go brrrr",
+		Version: version,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:   "shell-wrapper",
@@ -65,6 +76,12 @@ func main() {
 				Action:      assume.Subcmd,
 				ArgsUsage:   " <profile name>",
 			},
+			{
+				Name:        "sso",
+				Aliases:     []string{"s"},
+				Description: "assume the given profile using SSO",
+				Action:      subcmdWithConfig(sso.Subcmd),
+			},
 		},
 	}
 
@@ -76,5 +93,17 @@ func main() {
 		} else {
 			log.Fatal(err)
 		}
+	}
+}
+
+func subcmdWithConfig(action func(context.Context, *cli.Command, *config.Config) error) cli.ActionFunc {
+	config, err := config.New()
+	if err != nil {
+		return func(ctx context.Context, cmd *cli.Command) error {
+			return errors.Errorf("could not load aws config: %w", err)
+		}
+	}
+	return func(ctx context.Context, cmd *cli.Command) error {
+		return action(ctx, cmd, config)
 	}
 }

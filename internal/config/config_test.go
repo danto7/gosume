@@ -21,7 +21,7 @@ func trimWhitespace(content string) string {
 	return result
 }
 
-func setupGosumeConfig(t *testing.T, config_ini_raw, credential_ini_raw string) *config.GosumeConfig {
+func setupGosumeConfig(t *testing.T, config_ini_raw, credential_ini_raw string) *config.Config {
 	t.Helper()
 	log.SetLevel(log.DebugLevel)
 
@@ -39,13 +39,13 @@ func setupGosumeConfig(t *testing.T, config_ini_raw, credential_ini_raw string) 
 	}
 	t.Setenv("AWS_CONFIG_FILE", configFile)
 	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", credentialsFile)
-	// TODO fix test setup
+	// TODO: fix test setup
 	conf, err := config.New()
 	if err != nil {
 		t.Error(err)
 	}
 
-	return &conf
+	return conf
 }
 
 func TestHasProfileExists(t *testing.T) {
@@ -78,7 +78,11 @@ func TestMfaDeviceProfileExistsMfaSet(t *testing.T) {
 	mfa_serial = you_can_call_me_mfa
 	`)
 
-	if config.MfaSerial("mfa") != "you_can_call_me_mfa" {
+	cfg, err := config.AwsSharedConfig("mfa")
+	if err != nil {
+		t.Error(err)
+	}
+	if cfg.MFASerial != "you_can_call_me_mfa" {
 		t.Errorf("there should have been a mfa")
 	}
 }
@@ -89,17 +93,12 @@ func TestMfaDeviceProfileExistsMfaNotSet(t *testing.T) {
 	`, `
 	[mfa]
 	`)
-	if config.MfaSerial("exists") != "" {
-		t.Errorf("this is not the mfa_serial you are looking for")
+
+	cfg, err := config.AwsSharedConfig("mfa")
+	if err != nil {
+		t.Error(err)
 	}
-}
-func TestMfaDeviceProfileDoesNotExist(t *testing.T) {
-	config := setupGosumeConfig(t, `
-	`, `
-	[mfa]
-	mfa_serial = you_can_call_me_mfa
-	`)
-	if config.MfaSerial("nothing") != "" {
+	if cfg.MFASerial != "" {
 		t.Errorf("this is not the mfa_serial you are looking for")
 	}
 }

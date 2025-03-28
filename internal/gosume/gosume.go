@@ -5,12 +5,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/charmbracelet/log"
+	"github.com/danto7/gosume/internal/cache"
 	"github.com/danto7/gosume/internal/config"
 	"github.com/go-errors/errors"
 )
 
-func New() (*Gosume, error) {
-	cache, err := NewCredentialsCache()
+func New(ctx context.Context) (*Gosume, error) {
+	creds, err := cache.Load()
 	if err != nil {
 		return nil, err
 	}
@@ -21,14 +22,14 @@ func New() (*Gosume, error) {
 	}
 
 	return &Gosume{
-		config: &conf,
-		cache:  cache,
+		config: conf,
+		cache:  creds,
 	}, nil
 }
 
 type Gosume struct {
-	config *config.GosumeConfig
-	cache  *CredentialsCache
+	config *config.Config
+	cache  *cache.CredentialsCache
 }
 
 var AssumeError = errors.New("assume error")
@@ -64,14 +65,14 @@ func (g *Gosume) AssumeProfile(ctx context.Context, targetProfileName string) (*
 		log.Debugf("assumed profile %s", profileName)
 
 		credentials, err := gosumeClient.AssumeRole(ctx, roleArn)
-		g.cache.setCredentials(profileName, "eu-central-1", credentials)
+		g.cache.SetCredentials(profileName, "eu-central-1", credentials)
 		if err != nil {
 			return nil, errors.Errorf("could not create config from session credentials: %w", err)
 		}
 		log.Debug("after cache")
 	}
 
-	err := g.cache.writeCredentialsCacheToDisk()
+	err := g.cache.Write()
 	if err != nil {
 		return nil, errors.Errorf("could not write credentials cache to disk: \n\t%w", err)
 	}

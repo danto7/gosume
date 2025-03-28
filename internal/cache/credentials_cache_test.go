@@ -1,42 +1,61 @@
-package gosume
+package cache
 
 import (
-	"encoding/json"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/adrg/xdg"
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/k0kubun/pp"
 )
 
-func createTestCacheFile(tmpPath string, validJSON bool) error {
+func createTestCacheFileValid(t *testing.T, tmpPath string) error {
+	t.Helper()
+	cache := `
+	{
+		"profile_cache": {
+			"test-profile": {
+				"access_key_id": "test id",
+				"secret_access_key": "test secret key",
+				"session_token": "test session token",
+				"expiration": "2006-01-02T15:04:05Z",
+				"region": "test-region"
+			}
+		},
+		"sso_cache": {
+			"test": {
+				"access_token": "test token",
+				"expires_at": "2006-01-02T15:04:05Z",
+				"refresh_token": "test refresh token",
+				"sso_region": "test region"
+			}
+		}
+	}
+	`
+	return os.WriteFile(tmpPath, []byte(cache), 0600)
+}
+
+func cat(t *testing.T, path string) {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	t.Logf("content: %s", content)
+}
+
+func createTestCacheFileInvalid(t *testing.T, tmpPath string) error {
 	file, err := os.Create(tmpPath)
 	if err != nil {
 		return err
 	}
 
-	if validJSON {
-		testProfile := &CachedProfile{
-			AccessKeyId:     aws.String("test-access-key-id"),
-			SecretAccessKey: aws.String("test-secret-access-key"),
-			SessionToken:    aws.String("test-session-token"),
-			Expiration:      aws.Time(time.Now().Add(1 * time.Hour)),
-			Region:          aws.String("test-region"),
-		}
+	_, err = file.Write([]byte("this is not valid json"))
+	file.Close()
 
-		json, err := json.Marshal(map[string]*CachedProfile{"test-profile": testProfile})
-		if err != nil {
-			return err
-		}
+	cat(t, tmpPath)
 
-		file.Write(json)
-	} else {
-		file.Write([]byte("this is not valid json"))
-	}
-
-	return file.Close()
+	return err
 }
 
 func TestNewCredentialsCacheExists(t *testing.T) {
@@ -46,22 +65,29 @@ func TestNewCredentialsCacheExists(t *testing.T) {
 	xdg.Reload()
 
 	tmpPath := tmpDir + "/" + GOSUME_CACHE_FILENAME
-	err := createTestCacheFile(tmpPath, true)
+	err := createTestCacheFileValid(t, tmpPath)
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
 
-	cache, err := NewCredentialsCache()
+	cc, err := Load()
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
+	pp.Print(cc)
 
-	if cache.cachePath != tmpPath {
-		t.Errorf("expected cache path to be %s, got %s", tmpPath, cache.cachePath)
+	if cc.cachePath != tmpPath {
+		t.Errorf("expected cache path to be %s, got %s", tmpPath, cc.cachePath)
 	}
 
-	if _, ok := cache.cache["test-profile"]; !ok {
-		t.Errorf("expected cache to contain test-profile")
+	const profile = "test-profile"
+	if _, ok := cc.cache.ProfileCache[profile]; !ok {
+		t.Errorf("expected cache to contain profile '%s'", profile)
+	}
+
+	const ssoSession = "test"
+	if _, ok := cc.cache.SsoCache[ssoSession]; !ok {
+		t.Errorf("expected cache to contain sso session '%s'", ssoSession)
 	}
 }
 
@@ -71,7 +97,7 @@ func TestNewCredentialsCacheNotExists(t *testing.T) {
 
 	xdg.Reload()
 
-	cache, err := NewCredentialsCache()
+	cache, err := Load()
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
@@ -81,8 +107,8 @@ func TestNewCredentialsCacheNotExists(t *testing.T) {
 		t.Errorf("expected cache path to be %s, got %s", tmpPath, cache.cachePath)
 	}
 
-	if len(cache.cache) != 0 {
-		t.Errorf("expected cache to be empty, got %d", len(cache.cache))
+	if len(cache.cache.ProfileCache) != 0 {
+		t.Errorf("expected cache to be empty, got %d", len(cache.cache.ProfileCache))
 	}
 
 }
@@ -94,7 +120,7 @@ func TestNewCredentialsCacheNotReadable(t *testing.T) {
 	xdg.Reload()
 
 	tmpPath := tmpDir + "/" + GOSUME_CACHE_FILENAME
-	err := createTestCacheFile(tmpPath, true)
+	err := createTestCacheFileValid(t, tmpPath)
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
@@ -104,7 +130,7 @@ func TestNewCredentialsCacheNotReadable(t *testing.T) {
 		t.Errorf("oh no: %s", err)
 	}
 
-	cache, err := NewCredentialsCache()
+	cache, err := Load()
 	if err == nil || cache != nil {
 		t.Errorf("oh no: %s", err)
 	}
@@ -122,12 +148,12 @@ func TestNewCredentialsCacheNotJSON(t *testing.T) {
 	xdg.Reload()
 
 	tmpPath := tmpDir + "/" + GOSUME_CACHE_FILENAME
-	err := createTestCacheFile(tmpPath, false)
+	err := createTestCacheFileInvalid(t, tmpPath)
 	if err != nil {
 		t.Errorf("oh no: %s", err)
 	}
 
-	cache, err := NewCredentialsCache()
+	cache, err := Load()
 	if err == nil || cache != nil {
 		t.Errorf("oh no: %s", err)
 	}

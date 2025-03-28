@@ -22,7 +22,7 @@ func Subcmd(ctx context.Context, cmd *cli.Command) error {
 		return errors.Errorf("a command is required")
 	}
 
-	gs, err := gosume.New()
+	gs, err := gosume.New(ctx)
 	if err != nil {
 		return errors.Errorf("could not initialize gosume: \n%w", err)
 	}
