@@ -39,7 +39,7 @@ func deviceAuth(ctx context.Context, sessionName string, sessionConfig *ini.Sect
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("device auth started", "device code", *deviceAuth.DeviceCode, "verification uri", *deviceAuth.VerificationUriComplete)
+	log.Info("device auth started", "device code", *deviceAuth.DeviceCode, "verification uri", *deviceAuth.VerificationUriComplete)
 
 	deviceAuthCtx, deviceAuthCancel := context.WithTimeout(ctx, time.Duration(deviceAuth.ExpiresIn)*time.Second)
 	createTokenInput := ssooidc.CreateTokenInput{
@@ -73,10 +73,10 @@ func deviceAuth(ctx context.Context, sessionName string, sessionConfig *ini.Sect
 
 	expiresAt := time.Now().Add(time.Duration(createTokenOut.ExpiresIn) * time.Second)
 	session := cache.CachedSsoSession{
-		AccessToken:  createTokenOut.AccessToken,
-		RefreshToken: createTokenOut.RefreshToken,
-		ExpiresAt:    &expiresAt,
-		SsoRegion:    aws.String(region.Value()),
+		AccessToken:  *createTokenOut.AccessToken,
+		RefreshToken: *createTokenOut.RefreshToken,
+		ExpiresAt:    expiresAt,
+		SsoRegion:    region.Value(),
 	}
 	creds.SetSsoSession(sessionName, &session)
 	if err := creds.Write(); err != nil {
