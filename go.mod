@@ -5,9 +5,9 @@ go 1.23
 require (
 	github.com/adrg/xdg v0.5.3
 	github.com/aws/aws-sdk-go-v2 v1.36.3
-	github.com/aws/aws-sdk-go-v2/config v1.29.14
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.67
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19
+	github.com/aws/aws-sdk-go-v2/config v1.29.15
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.68
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.20
 	github.com/charmbracelet/log v0.4.2
 	github.com/go-errors/errors v1.5.1
 	github.com/urfave/cli/v3 v3.3.3
