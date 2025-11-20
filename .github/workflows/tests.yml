@@ -19,7 +19,7 @@ jobs:
           #    ~\go\pkg\mod
     runs-on: ${{ matrix.os.name }}
     steps:
-      - uses: "actions/checkout@v3"
+      - uses: "actions/checkout@v6"
       - uses: jdx/mise-action@v2
         with:
           version: 2024.8.6
